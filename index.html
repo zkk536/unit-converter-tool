@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit Converter - Free Online Calculator | K Two Tools</title>
+<meta name="description" content="Convert between units of length, weight, temperature, data, time. Free online unit converter.">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+body{background:#0f172a;color:#e2e8f0;font-family:system-ui}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:2rem}
+.btn{background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;padding:0.75rem 1.5rem;border-radius:8px;color:white;cursor:pointer;font-weight:600;transition:all .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(59,130,246,0.4)}
+.input{background:#0f172a;border:1px solid #475569;border-radius:8px;padding:0.75rem 1rem;color:#e2e8f0;width:100%;font-size:1.2rem}
+.input:focus{outline:none;border-color:#3b82f6}
+select{background:#0f172a;border:1px solid #475569;border-radius:8px;padding:0.75rem 1rem;color:#e2e8f0;width:100%}
+.cat-btn{padding:0.5rem 1rem;border-radius:6px;cursor:pointer;transition:all .2s;border:1px solid #475569;background:transparent}
+.cat-btn.active{background:#3b82f6;border-color:#3b82f6}
+.cat-btn:hover:not(.active){background:#334155}
+.result{font-size:2rem;font-weight:700;text-align:center;padding:1rem;background:#0f172a;border-radius:8px;margin:1rem 0}
+.sponsor{background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:8px;padding:1rem;text-align:center;margin-top:2rem}
+</style>
+</head>
+<body class="min-h-screen p-4">
+<div class="max-w-2xl mx-auto">
+<div class="text-center mb-8">
+<h1 class="text-3xl font-bold mb-2">📐 Unit Converter</h1>
+<p class="text-gray-400">Convert between hundreds of units instantly.</p>
+</div>
+<div class="flex gap-2 flex-wrap justify-center mb-6" id="categories"></div>
+<div class="card">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+<div>
+<label class="text-sm text-gray-400 block mb-1">From</label>
+<input class="input mb-2" id="fromVal" type="number" value="1" oninput="convert()">
+<select id="fromUnit" onchange="convert()"></select>
+</div>
+<div>
+<label class="text-sm text-gray-400 block mb-1">To</label>
+<div class="result" id="result">—</div>
+<select id="toUnit" onchange="convert()"></select>
+</div>
+</div>
+<button class="btn w-full" onclick="swap()">🔄 Swap Units</button>
+</div>
+<div class="sponsor">
+<p class="text-sm text-gray-400 mb-2">Built by <strong>K Two</strong> 💀 | Need custom tools?</p>
+<a href="mailto:ktwo.dev@proton.me" class="text-blue-400 hover:text-blue-300 text-sm">📧 ktwo.dev@proton.me</a>
+<span class="text-gray-600 mx-2">|</span>
+<a href="https://github.com/sponsors/zkk536" class="text-blue-400 hover:text-blue-300 text-sm">💖 Sponsor</a>
+</div>
+</div>
+<script>
+const units={
+'📏 Length':{m:1,km:1000,cm:0.01,mm:0.001,mi:1609.344,yd:0.9144,ft:0.3048,in:0.0254,nm:1852},
+'⚖️ Weight':{kg:1,g:0.001,mg:1e-6,lb:0.453592,oz:0.0283495,ton:1000,st:6.35029},
+'🌡️ Temperature':{celsius:'c',fahrenheit:'f',kelvin:'k'},
+'💾 Data':{byte:1,KB:1024,MB:1048576,GB:1073741824,TB:1099511627776,bit:0.125},
+'⏰ Time':{second:1,minute:60,hour:3600,day:86400,week:604800,month:2592000,year:31536000},
+'📐 Area':{sqm:1,sqkm:1e6,sqft:0.092903,sqyd:0.836127,acre:4046.86,hectare:10000},
+'🧪 Volume':{liter:1,ml:0.001,gallon:3.78541,quart:0.946353,pint:0.473176,cup:0.236588,floz:0.0295735}
+};
+let currentCat=Object.keys(units)[0];
+function init(){
+const cats=document.getElementById('categories');
+cats.innerHTML=Object.keys(units).map(c=>`<div class="cat-btn ${c===currentCat?'active':''}" onclick="selectCat('${c}',this)">${c}</div>`).join('');
+populateUnits();
+}
+function selectCat(cat,el){
+currentCat=cat;
+document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+el.classList.add('active');
+populateUnits();convert();
+}
+function populateUnits(){
+const u=Object.keys(units[currentCat]);
+const from=document.getElementById('fromUnit'),to=document.getElementById('toUnit');
+from.innerHTML=u.map(k=>`<option value="${k}">${k}</option>`).join('');
+to.innerHTML=u.map((k,i)=>`<option value="${k}" ${i===1?'selected':''}>${k}</option>`).join('');
+convert();
+}
+function convert(){
+const val=parseFloat(document.getElementById('fromVal').value);
+const from=document.getElementById('fromUnit').value;
+const to=document.getElementById('toUnit').value;
+if(isNaN(val)){document.getElementById('result').textContent='—';return}
+const data=units[currentCat];
+let result;
+if(currentCat==='🌡️ Temperature'){result=convertTemp(val,from,to)}
+else{result=val*data[from]/data[to]}
+document.getElementById('result').textContent=result%1===0?result:result.toPrecision(8).replace(/\.?0+$/,'');
+}
+function convertTemp(v,f,t){
+let c;
+if(f==='celsius')c=v;else if(f==='fahrenheit')c=(v-32)*5/9;else c=v-273.15;
+if(t==='celsius')return c;if(t==='fahrenheit')return c*9/5+32;return c+273.15;
+}
+function swap(){
+const f=document.getElementById('fromUnit'),t=document.getElementById('toUnit');
+const tmp=f.value;f.value=t.value;t.value=tmp;convert();
+}
+init();
+</script>
+</body>
+</html>
